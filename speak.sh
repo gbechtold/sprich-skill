@@ -60,9 +60,9 @@ status_line() {  # $1 = wav, $2 = zustand: play|pause|stop
     # ♪ steht konstant fuer Audio; danach die moegliche Aktion:
     # laeuft es, wird ⏸ angeboten, pausiert es ⏵.
     case "$2" in
-      pause) printf '%s  ♪ ⏵ ⏪ ⏹\n' "$n" ;;
+      pause) printf '%s  ♪ ⏵ << ⏹\n' "$n" ;;
       stop)  printf '%s  ⏹\n' "$n" ;;
-      *)     printf '%s  ♪ ⏸ ⏪ ⏹\n' "$n" ;;
+      *)     printf '%s  ♪ ⏸ << ⏹\n' "$n" ;;
     esac
   fi
 }
@@ -91,7 +91,7 @@ load_opts() {  # bash 3.2 hat kein mapfile
 # ---------- Steuerbefehle: brauchen weder Piper noch Text ----------
 case "${1:-}" in
   pp|--toggle|--pause|--play)
-    pid_alive || { echo "⏹ nichts aktiv  ⏪ again"; exit 0; }
+    pid_alive || { echo "⏹ nichts aktiv  << again"; exit 0; }
     if [[ "$(pid_state)" == T* ]]; then kill -CONT "$(cat "$STATE/play.pid")"; S="play"; else kill -STOP "$(cat "$STATE/play.pid")"; S="pause"; fi
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
     status_line "$(cat "$STATE/play.file")" "$S"; exit 0 ;;

@@ -88,7 +88,7 @@ user ever sees.
 Just the speaking title — no timestamp, no duration, no command prefixes. Plain ISO text glyphs, no emoji and no variation selectors (`U+FE0F`), so the terminal renders every character the same way instead of colouring some and not others. ♪ is a constant audio marker; what follows is the *available action*: playing offers ⏸, paused offers ⏵, stopped leaves only ⏹. `SPRICH_ASCII=1` switches the whole thing to ASCII (`[playing]  pp rw stop` with `[1]`, `[2]`).
 
 ```
-ISO-Zeichen.wav  ♪ ⏸ ⏪ ⏹
+ISO-Zeichen.wav  ♪ ⏸ << ⏹
   ① So lassen
   ② Andere Ziffern-Zeichen
 ```

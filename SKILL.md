@@ -134,7 +134,7 @@ als Codeblock. Das ist keine Dopplung — es ist die einzige Fassung, die der Us
 sehen bekommt.
 
 ```
-ISO-Zeichen.wav  ♪ ⏸ ⏪ ⏹
+ISO-Zeichen.wav  ♪ ⏸ << ⏹
   ① So lassen
   ② Andere Ziffern-Zeichen
 ```
