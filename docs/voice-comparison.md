@@ -56,9 +56,14 @@ error rate against the original, 83-word German text) found the opposite of what
 | 16 kHz voices (kerstin, ramona, karlsson, eva_k) | 12 % and up |
 
 **`thorsten-medium` is both the most intelligible and roughly seven times faster
-than `thorsten-high`.** The bigger model is not the better one here. If you care
-about being understood rather than about timbre, run the skill with
-`--voice medium`.
+than `thorsten-high`.** The bigger model is not the better one here.
+
+The skill nevertheless ships with `thorsten-high` as its default. That is a
+deliberate choice made with these numbers on the table: for a briefing you hear
+several times a day, cadence on long sentences was judged to matter more than a
+2.4-point WER gap, and `high` at 4.3x realtime is fast enough to never lag
+playback. If your priority is intelligibility — noisy room, unattended pipeline,
+transcription downstream — use `--voice medium`.
 
 `de_DE-mls-medium` has 236 speakers, but speaker 42 produces pure noise (100 % WER)
 — never use multi-speaker MLS without checking each speaker individually.
