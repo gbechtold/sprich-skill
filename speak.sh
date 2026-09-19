@@ -55,12 +55,14 @@ status_line() {  # $1 = wav, $2 = zustand: play|pause|stop
       *)     printf '%s  [playing]  pp rw stop\n' "$n" ;;
     esac
   else
-    # Durchgehend Emoji, nichts gemischt. Der erste zeigt den Zustand,
-    # danach stehen die moeglichen Aktionen — pausiert wird Play angeboten.
+    # ISO-Textzeichen, keine Emoji-Variationsselektoren (kein U+FE0F) — sonst
+    # rendert das Terminal manche bunt und manche als Text.
+    # ♪ steht konstant fuer Audio; danach die moegliche Aktion:
+    # laeuft es, wird ⏸ angeboten, pausiert es ⏵.
     case "$2" in
-      pause) printf '%s  ⏸️ ▶️ ⏪ ⏹️\n' "$n" ;;
-      stop)  printf '%s  ⏹️\n' "$n" ;;
-      *)     printf '%s  🔊 ⏸️ ⏪ ⏹️\n' "$n" ;;
+      pause) printf '%s  ♪ ⏵ ⏪ ⏹\n' "$n" ;;
+      stop)  printf '%s  ⏹\n' "$n" ;;
+      *)     printf '%s  ♪ ⏸ ⏪ ⏹\n' "$n" ;;
     esac
   fi
 }
@@ -70,7 +72,7 @@ status_line() {  # $1 = wav, $2 = zustand: play|pause|stop
 # ist nach zehn Sekunden weg.
 option_lines() {
   local i=1 o
-  local keys=("1️⃣" "2️⃣" "3️⃣" "4️⃣" "5️⃣" "6️⃣" "7️⃣" "8️⃣" "9️⃣")
+  local keys=("①" "②" "③" "④" "⑤" "⑥" "⑦" "⑧" "⑨")
   [[ ${#OPTIONS[@]} -eq 0 ]] && return 0
   for o in "${OPTIONS[@]}"; do
     [[ -z "$o" ]] && continue
@@ -89,19 +91,19 @@ load_opts() {  # bash 3.2 hat kein mapfile
 # ---------- Steuerbefehle: brauchen weder Piper noch Text ----------
 case "${1:-}" in
   pp|--toggle|--pause|--play)
-    pid_alive || { echo "⏹️ nichts aktiv  ⏮️ again"; exit 0; }
+    pid_alive || { echo "⏹ nichts aktiv  ⏪ again"; exit 0; }
     if [[ "$(pid_state)" == T* ]]; then kill -CONT "$(cat "$STATE/play.pid")"; S="play"; else kill -STOP "$(cat "$STATE/play.pid")"; S="pause"; fi
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
     status_line "$(cat "$STATE/play.file")" "$S"; exit 0 ;;
   rw|--rewind|again|--repeat)
     F="$(cat "$STATE/play.file" 2>/dev/null)"
-    [[ -s "${F:-}" ]] || { echo "⏹️ nichts im Zwischenspeicher"; exit 2; }
+    [[ -s "${F:-}" ]] || { echo "⏹ nichts im Zwischenspeicher"; exit 2; }
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
     start_play "$F"; status_line "$F" play; load_opts; option_lines; exit 0 ;;
   stop|--stop)
     pid_alive && kill "$(cat "$STATE/play.pid")" 2>/dev/null
     F="$(cat "$STATE/play.file" 2>/dev/null)"; : > "$STATE/play.pid"
-    [[ -s "${F:-}" ]] && status_line "$F" stop || echo "⏹️ gestoppt"; exit 0 ;;
+    [[ -s "${F:-}" ]] && status_line "$F" stop || echo "⏹ gestoppt"; exit 0 ;;
   text|--last-text)
     [[ -s "$STATE/last.txt" ]] || { echo "noch nichts gesprochen" >&2; exit 2; }
     cat "$STATE/last.txt"; exit 0 ;;
