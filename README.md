@@ -76,13 +76,19 @@ replays it with no synthesis at all — 0.16 s of CPU instead of 4.9 s. It also
 sounds identical, which is the point: someone asking "again" wants the same
 words back, not a paraphrase they have to parse a second time.
 
-## One line, with transport controls
+## One status line, plus the options
 
-The skill prints exactly one line and nothing else:
+Output is pure ASCII — no emoji, so nothing depends on terminal font or glyph width:
 
 ```
-▶ 260919145843 Response Steuerungs-Probe.wav · 0:20 · ⏮ !sprich rw · ⏯ !sprich pp · ⏹ !sprich stop · 📄 !sprich text
+[>]  260919150252 Response ASCII-Probe.wav  0:03  |<< !sprich rw   >|| !sprich pp   [x] !sprich stop   [=] !sprich text
+     [1] Dateinamen zurueckdrehen - eine Minute
+     [2] Optionszeilen dauerhaft mitdrucken - sofort wirksam
+     [3] So lassen und im Alltag erproben
 ```
+
+The transport icon on the left is the state: `[>]` playing, `[||]` paused,
+`[x]` stopped.
 
 **Playback runs detached in the background.** The call returns as soon as
 synthesis finishes — about four seconds for a half-minute utterance, not thirty —
@@ -94,31 +100,34 @@ meaningful: you cannot pause something that blocks the turn.
 | `sprich pp` | pause / resume (toggle) |
 | `sprich rw` | rewind to the start |
 | `sprich stop` | stop |
-| `sprich again` | replay the last utterance, no synthesis |
+| `sprich again` | replay the last utterance and its options, no synthesis |
 | `sprich text` | print the last spoken wording |
 | `sprich ls` | list cached utterances |
+
+The option lines are the **only** exception to the one-line rule, for one reason:
+a spoken option you cannot read back is gone ten seconds later — you would have to
+take notes while listening in order to answer. Pass them with `--option`, once per
+option, and the script numbers them. Spoken they are ordinals ("Erstens",
+"Zweitens"); printed they are `[1]`, `[2]`. Same option, and the answer is the digit.
 
 Files are named `YYMMDDHHMMSS Response <Title>.wav` and live in `.state/audio`.
 Every invocation sweeps anything older than an hour (`SPRICH_KEEP_MIN` changes
 the window). Note `-mmin`, not `-mtime`: `-mtime` counts whole days and would
 never match a one-hour window.
 
-The trade-off is worth stating: with a single line, **the options are heard, not
-read**. An option you cannot remember after hearing it once is useless — keep
-them short and keep them to three. `sprich text` prints the wording when you need
-to look something up.
-
 The script also works standalone:
 
 ```bash
 ./speak.sh --title "Morning" "Guten Morgen."
 echo "Aus einer Pipe." | ./speak.sh --title "Pipe"
+./speak.sh --title "Choice" --option "Do X - a minute" --option "Leave it" "Erstens X. Zweitens nichts."
 ```
 
 | Flag | Effect |
 |---|---|
 | *(none)* | `thorsten-high` — the chosen voice |
 | `--title "…"` | speaking filename |
+| `--option "…"` | one option line, repeatable; the script numbers them |
 | `--voice medium` | `thorsten-medium` — faster, slightly flatter |
 | `--voice emotional` | `thorsten_emotional`, multi-speaker (`-s 0…6`) |
 | `--voice kerstin` / `--voice eva` | female voices, 16 kHz |

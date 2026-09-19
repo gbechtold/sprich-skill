@@ -23,6 +23,7 @@ KEEP_MIN="${SPRICH_KEEP_MIN:-60}"
 VOICE="de_DE-thorsten-high"
 RATE=22050
 TITLE=""
+OPTIONS=()
 
 mkdir -p "$AUDIO"
 
@@ -44,30 +45,50 @@ start_play() {  # $1 = wav
 
 fmt_dur() { awk -v s="$1" 'BEGIN{printf "%d:%02d", int(s/60), int(s%60)}'; }
 
-status_line() {  # $1 = wav, $2 = symbol
+# Reines ASCII: haengt nicht an Terminal-Schrift oder Emoji-Breite.
+status_line() {  # $1 = wav, $2 = transport-icon
   local f dur bytes
   f="$(basename "$1")"
   bytes=$(stat -f%z "$1" 2>/dev/null || echo 0)
   dur=$(awk -v b="$bytes" -v r="$RATE" 'BEGIN{printf "%.0f", (b-44)/(r*2)}')
-  printf '%s %s · %s · ⏮ !sprich rw · ⏯ !sprich pp · ⏹ !sprich stop · 📄 !sprich text\n' \
+  printf '%-4s %s  %s  |<< !sprich rw   >|| !sprich pp   [x] !sprich stop   [=] !sprich text\n' \
     "$2" "$f" "$(fmt_dur "$dur")"
+}
+
+# Optionen als ASCII-Icons unter der Statuszeile. Bewusst die einzige Ausnahme
+# von der Ein-Zeilen-Regel: eine gehoerte Option, die man nicht nachlesen kann,
+# ist nach zehn Sekunden weg.
+option_lines() {
+  local i=1 o
+  [[ ${#OPTIONS[@]} -eq 0 ]] && return 0
+  for o in "${OPTIONS[@]}"; do
+    [[ -z "$o" ]] && continue
+    printf '     [%d] %s\n' "$i" "$o"
+    i=$((i+1))
+  done
+}
+
+load_opts() {  # bash 3.2 hat kein mapfile
+  OPTIONS=()
+  [[ -s "$STATE/last.opts" ]] || return 0
+  while IFS= read -r l; do [[ -n "$l" ]] && OPTIONS+=("$l"); done < "$STATE/last.opts"
 }
 
 # ---------- Steuerbefehle: brauchen weder Piper noch Text ----------
 case "${1:-}" in
   pp|--toggle|--pause|--play)
-    pid_alive || { echo "⏹ nichts aktiv · ⏮ !sprich again startet die letzte Ausgabe"; exit 0; }
-    if [[ "$(pid_state)" == T* ]]; then kill -CONT "$(cat "$STATE/play.pid")"; S="▶"; else kill -STOP "$(cat "$STATE/play.pid")"; S="⏸"; fi
+    pid_alive || { echo "[x] nichts aktiv   |<< !sprich again startet die letzte Ausgabe"; exit 0; }
+    if [[ "$(pid_state)" == T* ]]; then kill -CONT "$(cat "$STATE/play.pid")"; S="[>]"; else kill -STOP "$(cat "$STATE/play.pid")"; S="[||]"; fi
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
     status_line "$(cat "$STATE/play.file")" "$S"; exit 0 ;;
   rw|--rewind|again|--repeat)
     F="$(cat "$STATE/play.file" 2>/dev/null)"
-    [[ -s "${F:-}" ]] || { echo "⏹ nichts im Zwischenspeicher — noch nichts gesprochen"; exit 2; }
+    [[ -s "${F:-}" ]] || { echo "[x] nichts im Zwischenspeicher - noch nichts gesprochen"; exit 2; }
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
-    start_play "$F"; status_line "$F" "▶"; exit 0 ;;
+    start_play "$F"; status_line "$F" "[>]"; load_opts; option_lines; exit 0 ;;
   stop|--stop)
     pid_alive && kill "$(cat "$STATE/play.pid")" 2>/dev/null
-    : > "$STATE/play.pid"; echo "⏹ gestoppt"; exit 0 ;;
+    : > "$STATE/play.pid"; echo "[x] gestoppt"; exit 0 ;;
   text|--last-text)
     [[ -s "$STATE/last.txt" ]] || { echo "noch nichts gesprochen" >&2; exit 2; }
     cat "$STATE/last.txt"; exit 0 ;;
@@ -89,6 +110,7 @@ while [[ $# -gt 0 ]]; do
       esac
       shift 2 ;;
     --title) TITLE="$2"; shift 2 ;;
+    --option) OPTIONS+=("$2"); shift 2 ;;
     *) break ;;
   esac
 done
@@ -123,6 +145,10 @@ printf '%s' "$TEXT"  > "$STATE/last.txt"
 printf '%s' "$RATE"  > "$STATE/last.rate"
 printf '%s' "$VOICE" > "$STATE/last.voice"
 
+: > "$STATE/last.opts"
+[[ ${#OPTIONS[@]} -gt 0 ]] && printf '%s\n' "${OPTIONS[@]}" > "$STATE/last.opts"
+
 start_play "$WAV"
 sweep
-status_line "$WAV" "▶"
+status_line "$WAV" "[>]"
+option_lines

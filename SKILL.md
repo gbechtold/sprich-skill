@@ -122,22 +122,43 @@ zurückspringen. Deshalb:
 - Bei Fehlern: **erst der Blocker**, dann die Optionen. Nicht beschönigen.
 - Gibt es eine Frist oder einen Preis fürs Nichtstun, gehört er ins Briefing.
 
-## Regel 3 — genau eine Zeile ins Terminal
+## Regel 3 — eine Statuszeile, darunter nur die Optionen
 
-Das Skript schreibt selbst **eine einzige Zeile** und sonst nichts:
+Das Skript schreibt die Ausgabe selbst, in reinem ASCII — keine Emoji, damit nichts
+an Terminal-Schrift oder Zeichenbreite hängt:
 
 ```
-▶ 260919145843 Response Steuerungs-Probe.wav · 0:20 · ⏮ !sprich rw · ⏯ !sprich pp · ⏹ !sprich stop · 📄 !sprich text
+[>]  260919150252 Response ASCII-Probe.wav  0:03  |<< !sprich rw   >|| !sprich pp   [x] !sprich stop   [=] !sprich text
+     [1] Dateinamen zurueckdrehen - eine Minute
+     [2] Optionszeilen dauerhaft mitdrucken - sofort wirksam
+     [3] So lassen und im Alltag erproben
 ```
 
-Diese Zeile ist die gesamte Terminalausgabe des Skills. **Keinen Block mit Projekt,
-Aufgabe und Optionen darüber setzen, keine Zusammenfassung darunter.** Wer hören will,
-soll hören — sonst steht alles doppelt da und die Sprachausgabe war überflüssig.
+Das Transport-Icon links zeigt den Zustand: `[>]` läuft, `[||]` pausiert, `[x]` gestoppt.
 
-Die Folge musst du kennen: die Optionen sind dann **nur gehört**, nicht lesbar. Deshalb
-gilt Regel 1 hier doppelt — eine Option, die man sich nach dem Hören nicht merken kann,
-ist unbrauchbar. Kurz halten, höchstens drei. Wer nachlesen will, ruft `!sprich text`
-auf; das gibt den zuletzt gesprochenen Wortlaut aus.
+**Mehr als das gehört nicht ins Terminal.** Keinen Block mit Projekt und Aufgabe
+darüber, keine Zusammenfassung darunter. Wer hören will, soll hören — sonst steht
+alles doppelt da und die Sprachausgabe war überflüssig.
+
+Die Optionen sind die **einzige** Ausnahme von der Ein-Zeilen-Regel, und zwar aus
+einem Grund: eine gehörte Option, die man nicht nachlesen kann, ist nach zehn Sekunden
+weg — man müsste sich beim Zuhören Notizen machen, um antworten zu können. Übergib sie
+deshalb mit `--option`, einmal pro Option, in derselben Reihenfolge und Formulierung
+wie gesprochen:
+
+```bash
+speak.sh --title "Offene Entscheidungen" \
+  --option "Dateinamen zurueckdrehen - eine Minute" \
+  --option "So lassen und erproben" \
+  "Der gesprochene Text mit Erstens und Zweitens."
+```
+
+Kurz halten: die Zeile ist die Gedächtnisstütze zum Gehörten, nicht seine Wiederholung.
+Ein Halbsatz mit der Kostenangabe reicht. Enthält der Text keine Optionen, wird `--option`
+weggelassen — dann bleibt es bei der einen Zeile.
+
+Gesprochen wird weiterhin mit Ordnungszahlen („Erstens", „Zweitens"), gedruckt mit
+`[1]`, `[2]`. Beides meint dieselbe Option, und der User antwortet mit der Ziffer.
 
 ## Ausführen
 
@@ -168,10 +189,10 @@ Die Zeile nennt sie mit, der User tippt sie mit `!` davor:
 
 | Befehl | Wirkung |
 |---|---|
-| `!sprich pp` | Pause bzw. Fortsetzen (Umschalter) |
+| `!sprich pp` | Pause bzw. Fortsetzen (Umschalter), Icon wechselt `[>]` ↔ `[||]` |
 | `!sprich rw` | von vorn abspielen |
 | `!sprich stop` | beenden |
-| `!sprich again` | letzte Ausgabe erneut, ohne Synthese |
+| `!sprich again` | letzte Ausgabe erneut, ohne Synthese — samt ihrer Optionszeilen |
 | `!sprich text` | zuletzt gesprochenen Wortlaut ausgeben |
 | `!sprich ls` | zwischengespeicherte Ausgaben auflisten |
 
@@ -184,6 +205,7 @@ alles älter als eine Stunde fliegt raus (`SPRICH_KEEP_MIN` ändert das Fenster)
 |---|---|
 | *(ohne)* | Thorsten High — die gesetzte Stimme, nicht ohne Rücksprache ändern |
 | `--title "…"` | sprechender Dateiname |
+| `--option "…"` | eine Optionszeile, wiederholbar; Nummerierung setzt das Skript |
 | `--voice medium` | Thorsten Medium — schneller, minimal flacher |
 | `--voice emotional` | Thorsten Emotional, multi-speaker (`-s 0…6` im Modell) |
 | `--voice kerstin` / `--voice eva` | weibliche Stimmen, 16 kHz |
