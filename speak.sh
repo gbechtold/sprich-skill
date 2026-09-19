@@ -43,16 +43,24 @@ start_play() {  # $1 = wav
   printf '%s' "$1" > "$STATE/play.file"
 }
 
-fmt_dur() { awk -v s="$1" 'BEGIN{printf "%d:%02d", int(s/60), int(s%60)}'; }
-
-# Reines ASCII: haengt nicht an Terminal-Schrift oder Emoji-Breite.
-status_line() {  # $1 = wav, $2 = transport-icon
-  local f dur bytes
-  f="$(basename "$1")"
-  bytes=$(stat -f%z "$1" 2>/dev/null || echo 0)
-  dur=$(awk -v b="$bytes" -v r="$RATE" 'BEGIN{printf "%.0f", (b-44)/(r*2)}')
-  printf '%-4s %s  %s  |<< !sprich rw   >|| !sprich pp   [x] !sprich stop   [=] !sprich text\n' \
-    "$2" "$f" "$(fmt_dur "$dur")"
+# Kurzform: nur der sprechende Titel, nicht der volle Dateiname. Der Zeitstempel
+# bleibt auf der Platte, im Terminal ist er Ballast.
+# SPRICH_ASCII=1 schaltet auf reinen Text um.
+status_line() {  # $1 = wav, $2 = zustand: play|pause|stop
+  local n; n="$(basename "$1")"; n="${n#* Response }"
+  if [[ -n "${SPRICH_ASCII:-}" ]]; then
+    case "$2" in
+      pause) printf '%s  [paused]  pp rw stop\n' "$n" ;;
+      stop)  printf '%s  [stopped]\n' "$n" ;;
+      *)     printf '%s  pp rw stop\n' "$n" ;;
+    esac
+  else
+    case "$2" in
+      pause) printf '%s  ⏸ ▶   ▌▌   ◀◀\n' "$n" ;;
+      stop)  printf '%s  ⏹\n' "$n" ;;
+      *)     printf '%s  🔈 ▶   ▌▌   ◀◀\n' "$n" ;;
+    esac
+  fi
 }
 
 # Optionen als ASCII-Icons unter der Statuszeile. Bewusst die einzige Ausnahme
@@ -63,7 +71,7 @@ option_lines() {
   [[ ${#OPTIONS[@]} -eq 0 ]] && return 0
   for o in "${OPTIONS[@]}"; do
     [[ -z "$o" ]] && continue
-    printf '     [%d] %s\n' "$i" "$o"
+    printf '  [%d] %s\n' "$i" "$o"
     i=$((i+1))
   done
 }
@@ -77,23 +85,24 @@ load_opts() {  # bash 3.2 hat kein mapfile
 # ---------- Steuerbefehle: brauchen weder Piper noch Text ----------
 case "${1:-}" in
   pp|--toggle|--pause|--play)
-    pid_alive || { echo "[x] nichts aktiv   |<< !sprich again startet die letzte Ausgabe"; exit 0; }
-    if [[ "$(pid_state)" == T* ]]; then kill -CONT "$(cat "$STATE/play.pid")"; S="[>]"; else kill -STOP "$(cat "$STATE/play.pid")"; S="[||]"; fi
+    pid_alive || { echo "nichts aktiv  ·  again"; exit 0; }
+    if [[ "$(pid_state)" == T* ]]; then kill -CONT "$(cat "$STATE/play.pid")"; S="play"; else kill -STOP "$(cat "$STATE/play.pid")"; S="pause"; fi
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
     status_line "$(cat "$STATE/play.file")" "$S"; exit 0 ;;
   rw|--rewind|again|--repeat)
     F="$(cat "$STATE/play.file" 2>/dev/null)"
-    [[ -s "${F:-}" ]] || { echo "[x] nichts im Zwischenspeicher - noch nichts gesprochen"; exit 2; }
+    [[ -s "${F:-}" ]] || { echo "nichts im Zwischenspeicher"; exit 2; }
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
-    start_play "$F"; status_line "$F" "[>]"; load_opts; option_lines; exit 0 ;;
+    start_play "$F"; status_line "$F" play; load_opts; option_lines; exit 0 ;;
   stop|--stop)
     pid_alive && kill "$(cat "$STATE/play.pid")" 2>/dev/null
-    : > "$STATE/play.pid"; echo "[x] gestoppt"; exit 0 ;;
+    F="$(cat "$STATE/play.file" 2>/dev/null)"; : > "$STATE/play.pid"
+    [[ -s "${F:-}" ]] && status_line "$F" stop || echo "gestoppt"; exit 0 ;;
   text|--last-text)
     [[ -s "$STATE/last.txt" ]] || { echo "noch nichts gesprochen" >&2; exit 2; }
     cat "$STATE/last.txt"; exit 0 ;;
   ls|--list)
-    sweep; ls -1t "$AUDIO"/*.wav 2>/dev/null | head -20 | while read -r f; do basename "$f"; done; exit 0 ;;
+    sweep; ls -1t "$AUDIO"/*.wav 2>/dev/null | head -20 | while read -r f; do n="$(basename "$f")"; echo "${n#* Response }"; done; exit 0 ;;
   --help|-h) sed -n '2,20p' "$0"; exit 0 ;;
 esac
 
@@ -150,5 +159,5 @@ printf '%s' "$VOICE" > "$STATE/last.voice"
 
 start_play "$WAV"
 sweep
-status_line "$WAV" "[>]"
+status_line "$WAV" play
 option_lines

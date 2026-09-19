@@ -134,14 +134,18 @@ als Codeblock. Das ist keine Dopplung — es ist die einzige Fassung, die der Us
 sehen bekommt.
 
 ```
-[>]  260919150252 Response ASCII-Probe.wav  0:03  |<< !sprich rw   >|| !sprich pp   [x] !sprich stop   [=] !sprich text
-     [1] Dateinamen zurueckdrehen - eine Minute
-     [2] Optionszeilen dauerhaft mitdrucken - sofort wirksam
-     [3] So lassen und im Alltag erproben
+Kurze Zeile.wav  🔈 ▶   ▌▌   ◀◀
+  [1] So lassen
+  [2] Noch kuerzer, ohne Optionen
 ```
 
-Reines ASCII, damit nichts an Terminal-Schrift oder Zeichenbreite hängt. Das
-Transport-Icon links zeigt den Zustand: `[>]` läuft, `[||]` pausiert, `[x]` gestoppt.
+Nur der sprechende Titel, keine Zeitstempel, keine Dauer, kein `!sprich` vor jedem
+Befehl — der Zeitstempel bleibt auf der Platte, im Terminal ist er Ballast. Das erste
+Icon zeigt den Zustand: 🔈 läuft, ⏸ pausiert, ⏹ gestoppt. Gestoppt fallen die
+Steuerzeichen weg.
+
+`SPRICH_ASCII=1` schaltet auf reinen Text um: `Kurze Zeile.wav  [paused]  pp rw stop`.
+
 Gilt genauso für die Steuerbefehle — auch nach `pp`, `rw` oder `again` gehört die
 zurückgegebene Zeile in die Antwort, sonst sieht der User den Zustandswechsel nicht.
 

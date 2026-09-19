@@ -85,17 +85,13 @@ the process has no TTY (`tty` reports `not a tty`; writing to `/dev/tty` fails w
 line verbatim in its own reply. That is not duplication — it is the only copy the
 user ever sees.
 
-Output is pure ASCII — no emoji, so nothing depends on terminal font or glyph width:
+Just the speaking title — no timestamp, no duration, no command prefixes. The leading icon is the state: 🔈 playing, ⏸ paused, ⏹ stopped. `SPRICH_ASCII=1` switches to plain text (`Kurze Zeile.wav  [paused]  pp rw stop`).
 
 ```
-[>]  260919150252 Response ASCII-Probe.wav  0:03  |<< !sprich rw   >|| !sprich pp   [x] !sprich stop   [=] !sprich text
-     [1] Dateinamen zurueckdrehen - eine Minute
-     [2] Optionszeilen dauerhaft mitdrucken - sofort wirksam
-     [3] So lassen und im Alltag erproben
+Kurze Zeile.wav  🔈 ▶   ▌▌   ◀◀
+  [1] So lassen
+  [2] Noch kuerzer, ohne Optionen
 ```
-
-The transport icon on the left is the state: `[>]` playing, `[||]` paused,
-`[x]` stopped.
 
 **Playback runs detached in the background.** The call returns as soon as
 synthesis finishes — about four seconds for a half-minute utterance, not thirty —
