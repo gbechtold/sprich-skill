@@ -143,6 +143,18 @@ Fourteen German voices measured head to head — Piper against all nine macOS `s
 voices, including the finding that eight of the nine macOS personas share one
 prosody engine and differ only in timbre: [`docs/voice-comparison.md`](docs/voice-comparison.md).
 
+## Idea: transport controls in the terminal chrome
+
+The controls are text in the scrollback, which means they have to be typed. In a
+host that draws its own terminal chrome — [Maestri](https://themaestri.app), for
+instance — a small button row in the footer would make them clickable:
+
+![Mockup of transport controls in the Maestri terminal footer](docs/maestri-footer-mockup.png)
+
+The bar at the bottom of the card is the sketch: play, pause and rewind next to the
+existing footer icons. Each button would send one line to the shell. Nothing in this
+repo depends on it; it is a note for anyone building a terminal host.
+
 ## Notes
 
 - Playback is detached, so it survives the call that started it and keeps going
