@@ -1,0 +1,3 @@
+#!/bin/bash
+# Transport für den Claude-Skill "sprich": rw · pp · stop · again · text · ls
+exec "${SPRICH_SKILL:-$HOME/.claude/skills/sprich}/speak.sh" "$@"

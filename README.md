@@ -76,26 +76,52 @@ replays it with no synthesis at all — 0.16 s of CPU instead of 4.9 s. It also
 sounds identical, which is the point: someone asking "again" wants the same
 words back, not a paraphrase they have to parse a second time.
 
+## One line, with transport controls
+
+The skill prints exactly one line and nothing else:
+
+```
+▶ 260919145843 Response Steuerungs-Probe.wav · 0:20 · ⏮ !sprich rw · ⏯ !sprich pp · ⏹ !sprich stop · 📄 !sprich text
+```
+
+**Playback runs detached in the background.** The call returns as soon as
+synthesis finishes — about four seconds for a half-minute utterance, not thirty —
+so the session keeps working while it speaks. That is also what makes pause
+meaningful: you cannot pause something that blocks the turn.
+
+| Command | Effect |
+|---|---|
+| `sprich pp` | pause / resume (toggle) |
+| `sprich rw` | rewind to the start |
+| `sprich stop` | stop |
+| `sprich again` | replay the last utterance, no synthesis |
+| `sprich text` | print the last spoken wording |
+| `sprich ls` | list cached utterances |
+
+Files are named `YYMMDDHHMMSS Response <Title>.wav` and live in `.state/audio`.
+Every invocation sweeps anything older than an hour (`SPRICH_KEEP_MIN` changes
+the window). Note `-mmin`, not `-mtime`: `-mtime` counts whole days and would
+never match a one-hour window.
+
+The trade-off is worth stating: with a single line, **the options are heard, not
+read**. An option you cannot remember after hearing it once is useless — keep
+them short and keep them to three. `sprich text` prints the wording when you need
+to look something up.
+
 The script also works standalone:
 
 ```bash
-./speak.sh "Guten Morgen."
-echo "Aus einer Pipe." | ./speak.sh
-./speak.sh --voice medium --save out.wav "Gespeichert und gesprochen."
+./speak.sh --title "Morning" "Guten Morgen."
+echo "Aus einer Pipe." | ./speak.sh --title "Pipe"
 ```
 
 | Flag | Effect |
 |---|---|
-| *(none)* | `thorsten-high` — best quality, 4.3× realtime |
-| `--voice medium` | `thorsten-medium` — 20× realtime, slightly flatter |
+| *(none)* | `thorsten-high` — the chosen voice |
+| `--title "…"` | speaking filename |
+| `--voice medium` | `thorsten-medium` — faster, slightly flatter |
 | `--voice emotional` | `thorsten_emotional`, multi-speaker (`-s 0…6`) |
 | `--voice kerstin` / `--voice eva` | female voices, 16 kHz |
-| `--save FILE.wav` | also write a WAV |
-| `--repeat` | replay the last utterance, no synthesis |
-| `--last-text` | print what was said last, without speaking |
-
-Playback is streamed: Piper writes raw audio, `ffplay` starts on the first
-sentence, so you do not wait for the full synthesis.
 
 Override locations with `PIPER_VOICES`, `PIPER_PYTHON` and `SPRICH_STATE`.
 
@@ -107,9 +133,8 @@ prosody engine and differ only in timbre: [`docs/voice-comparison.md`](docs/voic
 
 ## Notes
 
-- The skill blocks the turn while speaking. A 30-second briefing costs 30 seconds
-  before work resumes. That is deliberate — in the background the audio would
-  collide with the next tool output.
+- Playback is detached, so it survives the call that started it and keeps going
+  while the session works. `sprich stop` ends it.
 - Briefing content and rules are German. The mechanism is language-agnostic:
   swap the voice in `speak.sh` and rewrite `SKILL.md` for your language.
 - Runs on CPU via onnxruntime. No GPU needed.

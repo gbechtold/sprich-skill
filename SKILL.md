@@ -23,7 +23,7 @@ Bei `/sprich` ohne Argument sind es **zwei Schritte, in dieser Reihenfolge**:
 **Schritt 1 — nachsehen, was zuletzt gesprochen wurde.**
 
 ```bash
-"$HOME"/.claude/skills/sprich/speak.sh --last-text
+"$HOME"/.claude/skills/sprich/speak.sh text
 ```
 
 **Schritt 2 — vergleichen und entscheiden.**
@@ -32,7 +32,7 @@ Bei `/sprich` ohne Argument sind es **zwei Schritte, in dieser Reihenfolge**:
   der Cache enthält —, dann **wörtlich wiederholen**, nicht neu formulieren:
 
   ```bash
-  "$HOME"/.claude/skills/sprich/speak.sh --repeat
+  "$HOME"/.claude/skills/sprich/speak.sh again
   ```
 
   Das spielt das zwischengespeicherte Audio ab, ohne neu zu synthetisieren: statt fünf
@@ -47,9 +47,9 @@ Der letzte Output ist das, was zuletzt an den User berichtet wurde — das Ergeb
 letzten Arbeitsschritts, nicht der Prozess dorthin. Enthielt er Optionen, gehören sie
 mit; enthielt er keine, wird keine erfunden. Projekt und Aufgabe kommen nur dazu, wenn
 der Output ohne sie unverständlich wäre. Es gilt trotzdem alles aus den Regeln unten:
-Wortgrenze, keine Pfade, Ordnungszahlen, Ausgabe auch ins Terminal.
+Wortgrenze, keine Pfade, Ordnungszahlen — und genau eine Zeile im Terminal.
 
-Exit-Code 2 von `--last-text` oder `--repeat` heißt: in dieser Session wurde noch nichts
+Exit-Code 2 von `text` oder `again` heißt: in dieser Session wurde noch nichts
 gesprochen. Dann ist der letzte Output zwangsläufig neu — normal sprechen.
 
 ## Das Briefing — Aufbau (`/sprich briefing`)
@@ -122,56 +122,71 @@ zurückspringen. Deshalb:
 - Bei Fehlern: **erst der Blocker**, dann die Optionen. Nicht beschönigen.
 - Gibt es eine Frist oder einen Preis fürs Nichtstun, gehört er ins Briefing.
 
-## Regel 3 — immer auch ins Terminal
+## Regel 3 — genau eine Zeile ins Terminal
 
-Sprache allein reicht nicht: geantwortet wird getippt. Vor dem Sprechen denselben
-Inhalt kompakt zeigen, Optionen nummeriert, **jede mit ihrer Konsequenz** — nicht
-die Kurzfassung, sonst fehlt beim Nachlesen genau das, was die Wahl trägt:
+Das Skript schreibt selbst **eine einzige Zeile** und sonst nichts:
 
 ```
-Projekt   — …
-Aufgabe   — …
-Ergebnis  — … (mit Zahl/Befund, nicht „erledigt")
-
-1. … — Kosten/Folge
-2. … — Kosten/Folge
-3. … — Kosten/Folge
+▶ 260919145843 Response Steuerungs-Probe.wav · 0:20 · ⏮ !sprich rw · ⏯ !sprich pp · ⏹ !sprich stop · 📄 !sprich text
 ```
 
-So genügt „2" als Antwort.
+Diese Zeile ist die gesamte Terminalausgabe des Skills. **Keinen Block mit Projekt,
+Aufgabe und Optionen darüber setzen, keine Zusammenfassung darunter.** Wer hören will,
+soll hören — sonst steht alles doppelt da und die Sprachausgabe war überflüssig.
+
+Die Folge musst du kennen: die Optionen sind dann **nur gehört**, nicht lesbar. Deshalb
+gilt Regel 1 hier doppelt — eine Option, die man sich nach dem Hören nicht merken kann,
+ist unbrauchbar. Kurz halten, höchstens drei. Wer nachlesen will, ruft `!sprich text`
+auf; das gibt den zuletzt gesprochenen Wortlaut aus.
 
 ## Ausführen
 
-Text an das Skript geben, es synthetisiert und spielt ab. Playback startet beim
-ersten Satz, es wird also nicht auf die vollständige Synthese gewartet.
-
 ```bash
-"$HOME"/.claude/skills/sprich/speak.sh "Der fertige Briefing-Text."
+"$HOME"/.claude/skills/sprich/speak.sh --title "Kurzer Titel" "Der fertige Text."
 ```
 
-Längere Texte über stdin, das spart Quoting-Ärger:
+Längeres über stdin, das spart Quoting-Ärger:
 
 ```bash
-cat <<'EOF' | "$HOME"/.claude/skills/sprich/speak.sh
-Der fertige Briefing-Text.
+cat <<'EOF' | "$HOME"/.claude/skills/sprich/speak.sh --title "Kurzer Titel"
+Der fertige Text.
 EOF
 ```
 
-Das Skript blockiert bis zum Ende der Wiedergabe. Ein 30-Sekunden-Briefing hält
-den Turn also 30 Sekunden auf — das ist so gewollt, nicht in den Hintergrund
-schicken.
+**Die Wiedergabe läuft im Hintergrund.** Das Skript kehrt zurück, sobald die Synthese
+fertig ist — bei einem halbminütigen Briefing nach rund vier Sekunden, nicht nach
+dreißig. Die Sitzung arbeitet weiter, während gesprochen wird. Nicht auf das Ende
+warten und nicht nachschieben.
+
+`--title` gibt der Datei einen sprechenden Namen. Ohne Titel werden die ersten Wörter
+des Textes genommen, was meist schlechter ist — also immer einen setzen, drei bis fünf
+Wörter, die den Inhalt benennen.
+
+## Steuerung
+
+Die Zeile nennt sie mit, der User tippt sie mit `!` davor:
+
+| Befehl | Wirkung |
+|---|---|
+| `!sprich pp` | Pause bzw. Fortsetzen (Umschalter) |
+| `!sprich rw` | von vorn abspielen |
+| `!sprich stop` | beenden |
+| `!sprich again` | letzte Ausgabe erneut, ohne Synthese |
+| `!sprich text` | zuletzt gesprochenen Wortlaut ausgeben |
+| `!sprich ls` | zwischengespeicherte Ausgaben auflisten |
+
+Audiodateien liegen unter `.state/audio` und werden bei jedem Aufruf gekehrt:
+alles älter als eine Stunde fliegt raus (`SPRICH_KEEP_MIN` ändert das Fenster).
 
 ## Optionen des Skripts
 
 | Flag | Wirkung |
 |---|---|
-| *(ohne)* | Thorsten High — beste Qualität, 4,3× Echtzeit |
-| `--voice medium` | Thorsten Medium — 20× Echtzeit, minimal flacher |
+| *(ohne)* | Thorsten High — die gesetzte Stimme, nicht ohne Rücksprache ändern |
+| `--title "…"` | sprechender Dateiname |
+| `--voice medium` | Thorsten Medium — schneller, minimal flacher |
 | `--voice emotional` | Thorsten Emotional, multi-speaker (`-s 0…6` im Modell) |
-| `--voice kerstin` / `--voice eva` | weibliche Stimmen, nur 16 kHz |
-| `--save /pfad/datei.wav` | zusätzlich als WAV sichern |
-| `--repeat` | zuletzt Gesprochenes erneut abspielen, ohne Synthese |
-| `--last-text` | zuletzt gesprochenen Text ausgeben, ohne zu sprechen |
+| `--voice kerstin` / `--voice eva` | weibliche Stimmen, 16 kHz |
 
 ## Setup-Zustand
 
