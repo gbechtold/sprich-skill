@@ -47,7 +47,7 @@ Der letzte Output ist das, was zuletzt an den User berichtet wurde — das Ergeb
 letzten Arbeitsschritts, nicht der Prozess dorthin. Enthielt er Optionen, gehören sie
 mit; enthielt er keine, wird keine erfunden. Projekt und Aufgabe kommen nur dazu, wenn
 der Output ohne sie unverständlich wäre. Es gilt trotzdem alles aus den Regeln unten:
-Wortgrenze, keine Pfade, Ordnungszahlen — und genau eine Zeile im Terminal.
+Wortgrenze, keine Pfade, Ordnungszahlen — und die Statuszeile in die Antwort übernehmen.
 
 Exit-Code 2 von `text` oder `again` heißt: in dieser Session wurde noch nichts
 gesprochen. Dann ist der letzte Output zwangsläufig neu — normal sprechen.
@@ -122,10 +122,16 @@ zurückspringen. Deshalb:
 - Bei Fehlern: **erst der Blocker**, dann die Optionen. Nicht beschönigen.
 - Gibt es eine Frist oder einen Preis fürs Nichtstun, gehört er ins Briefing.
 
-## Regel 3 — eine Statuszeile, darunter nur die Optionen
+## Regel 3 — die Statuszeile gehört in die Antwort, nicht in die Tool-Ausgabe
 
-Das Skript schreibt die Ausgabe selbst, in reinem ASCII — keine Emoji, damit nichts
-an Terminal-Schrift oder Zeichenbreite hängt:
+**Das Wichtigste zuerst: der User sieht die Ausgabe des Skripts nicht.** Sie landet in
+der Tool-Ausgabe, und die wird ihm nicht zuverlässig angezeigt. Ein direkter Weg ins
+Terminal existiert nicht — der Prozess hat kein TTY (`tty` meldet `not a tty`, ein
+`> /dev/tty` scheitert mit `device not configured`).
+
+Deshalb: **die Zeile, die das Skript ausgibt, wörtlich in die eigene Antwort übernehmen**,
+als Codeblock. Das ist keine Dopplung — es ist die einzige Fassung, die der User zu
+sehen bekommt.
 
 ```
 [>]  260919150252 Response ASCII-Probe.wav  0:03  |<< !sprich rw   >|| !sprich pp   [x] !sprich stop   [=] !sprich text
@@ -134,17 +140,20 @@ an Terminal-Schrift oder Zeichenbreite hängt:
      [3] So lassen und im Alltag erproben
 ```
 
-Das Transport-Icon links zeigt den Zustand: `[>]` läuft, `[||]` pausiert, `[x]` gestoppt.
+Reines ASCII, damit nichts an Terminal-Schrift oder Zeichenbreite hängt. Das
+Transport-Icon links zeigt den Zustand: `[>]` läuft, `[||]` pausiert, `[x]` gestoppt.
+Gilt genauso für die Steuerbefehle — auch nach `pp`, `rw` oder `again` gehört die
+zurückgegebene Zeile in die Antwort, sonst sieht der User den Zustandswechsel nicht.
 
-**Mehr als das gehört nicht ins Terminal.** Keinen Block mit Projekt und Aufgabe
-darüber, keine Zusammenfassung darunter. Wer hören will, soll hören — sonst steht
-alles doppelt da und die Sprachausgabe war überflüssig.
+**Und sonst nichts.** Kein Block mit Projekt und Aufgabe darüber, keine Zusammenfassung
+des Gesprochenen darunter. Höchstens ein kurzer Satz, wenn etwas zu sagen ist, das
+nicht im Gesprochenen steckt. Wer hören will, soll hören — sonst steht alles doppelt
+da und die Sprachausgabe war überflüssig.
 
-Die Optionen sind die **einzige** Ausnahme von der Ein-Zeilen-Regel, und zwar aus
-einem Grund: eine gehörte Option, die man nicht nachlesen kann, ist nach zehn Sekunden
-weg — man müsste sich beim Zuhören Notizen machen, um antworten zu können. Übergib sie
-deshalb mit `--option`, einmal pro Option, in derselben Reihenfolge und Formulierung
-wie gesprochen:
+Die Optionen stehen aus einem Grund dabei: eine gehörte Option, die man nicht nachlesen
+kann, ist nach zehn Sekunden weg — man müsste sich beim Zuhören Notizen machen, um
+antworten zu können. Übergib sie mit `--option`, einmal pro Option, in derselben
+Reihenfolge und Formulierung wie gesprochen:
 
 ```bash
 speak.sh --title "Offene Entscheidungen" \
@@ -154,11 +163,11 @@ speak.sh --title "Offene Entscheidungen" \
 ```
 
 Kurz halten: die Zeile ist die Gedächtnisstütze zum Gehörten, nicht seine Wiederholung.
-Ein Halbsatz mit der Kostenangabe reicht. Enthält der Text keine Optionen, wird `--option`
+Ein Halbsatz mit der Kostenangabe reicht. Ohne Optionen im Text wird `--option`
 weggelassen — dann bleibt es bei der einen Zeile.
 
-Gesprochen wird weiterhin mit Ordnungszahlen („Erstens", „Zweitens"), gedruckt mit
-`[1]`, `[2]`. Beides meint dieselbe Option, und der User antwortet mit der Ziffer.
+Gesprochen wird mit Ordnungszahlen („Erstens", „Zweitens"), gedruckt mit `[1]`, `[2]`.
+Beides meint dieselbe Option, und der User antwortet mit der Ziffer.
 
 ## Ausführen
 

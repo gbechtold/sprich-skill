@@ -78,6 +78,13 @@ words back, not a paraphrase they have to parse a second time.
 
 ## One status line, plus the options
 
+**The skill's stdout does not reach the user.** It goes into the tool result, which
+Claude Code does not reliably display, and there is no direct route to the terminal —
+the process has no TTY (`tty` reports `not a tty`; writing to `/dev/tty` fails with
+`device not configured`). So the rule in `SKILL.md` is that Claude must reproduce the
+line verbatim in its own reply. That is not duplication — it is the only copy the
+user ever sees.
+
 Output is pure ASCII — no emoji, so nothing depends on terminal font or glyph width:
 
 ```
