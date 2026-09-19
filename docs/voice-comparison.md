@@ -1,6 +1,6 @@
 # German voice comparison — Piper vs. macOS `say`
 
-Measured 2026-09-19 on an Intel Mac, same sentence for every voice:
+Measured 2026-09-19 on an Apple M4, same sentence for every voice:
 
 > Guten Tag, hier ist Stars Media IT. Ihre Kampagne läuft seit dem 19. September
 > und hat bereits 1.240 Klicks erzielt. Für Rückfragen erreichen Sie uns jederzeit.
@@ -39,3 +39,26 @@ Anna is the old legacy voice and the only one with its own timing.
 several times a day benefits from the more natural cadence, and Piper's
 `thorsten-high` is noticeably less flat on long sentences. Piper also gives you
 the same voice on Linux, which `say` does not.
+
+## Intelligibility — measured separately, and it contradicts the ranking above
+
+The table above measures speed, not how well a voice is understood. An earlier
+round-trip test (TTS output transcribed back with whisper.cpp large-v3-turbo, word
+error rate against the original, 83-word German text) found the opposite of what
+"high vs medium" suggests:
+
+| Voice | WER |
+|---|---|
+| `de_DE-thorsten-medium` | **3.6 %** |
+| `de_DE-thorsten_emotional-medium` (surprised) | 4.8 % |
+| `de_DE-thorsten-high` | 6.0 % |
+| `de_DE-thorsten-low` | 8.4 % |
+| 16 kHz voices (kerstin, ramona, karlsson, eva_k) | 12 % and up |
+
+**`thorsten-medium` is both the most intelligible and roughly seven times faster
+than `thorsten-high`.** The bigger model is not the better one here. If you care
+about being understood rather than about timbre, run the skill with
+`--voice medium`.
+
+`de_DE-mls-medium` has 236 speakers, but speaker 42 produces pure noise (100 % WER)
+— never use multi-speaker MLS without checking each speaker individually.
