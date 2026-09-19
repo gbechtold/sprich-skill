@@ -134,17 +134,20 @@ als Codeblock. Das ist keine Dopplung — es ist die einzige Fassung, die der Us
 sehen bekommt.
 
 ```
-Kurze Zeile.wav  🔈 ▶   ▌▌   ◀◀
-  [1] So lassen
-  [2] Noch kuerzer, ohne Optionen
+Nur Emoji.wav  🔊 ⏸️ ⏪ ⏹️
+  1️⃣ So lassen
+  2️⃣ Doch lieber die ASCII-Variante
 ```
 
 Nur der sprechende Titel, keine Zeitstempel, keine Dauer, kein `!sprich` vor jedem
-Befehl — der Zeitstempel bleibt auf der Platte, im Terminal ist er Ballast. Das erste
-Icon zeigt den Zustand: 🔈 läuft, ⏸ pausiert, ⏹ gestoppt. Gestoppt fallen die
-Steuerzeichen weg.
+Befehl — der Zeitstempel bleibt auf der Platte, im Terminal ist er Ballast.
 
-`SPRICH_ASCII=1` schaltet auf reinen Text um: `Kurze Zeile.wav  [paused]  pp rw stop`.
+**Durchgehend Emoji, nie mit ASCII gemischt** — auch die Optionen als 1️⃣ 2️⃣ 3️⃣.
+Das erste Zeichen ist der Zustand, danach stehen die *möglichen Aktionen*: läuft es,
+wird ⏸️ angeboten; pausiert es, ▶️. Gestoppt bleibt nur ⏹️ übrig, weil es nichts mehr
+zu steuern gibt.
+
+`SPRICH_ASCII=1` schaltet auf durchgehend reinen Text um: `Nur Emoji.wav  [playing]  pp rw stop` mit `[1]`, `[2]`. Auch dort wird nicht gemischt.
 
 Gilt genauso für die Steuerbefehle — auch nach `pp`, `rw` oder `again` gehört die
 zurückgegebene Zeile in die Antwort, sonst sieht der User den Zustandswechsel nicht.

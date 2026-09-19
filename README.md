@@ -85,12 +85,12 @@ the process has no TTY (`tty` reports `not a tty`; writing to `/dev/tty` fails w
 line verbatim in its own reply. That is not duplication — it is the only copy the
 user ever sees.
 
-Just the speaking title — no timestamp, no duration, no command prefixes. The leading icon is the state: 🔈 playing, ⏸ paused, ⏹ stopped. `SPRICH_ASCII=1` switches to plain text (`Kurze Zeile.wav  [paused]  pp rw stop`).
+Just the speaking title — no timestamp, no duration, no command prefixes. Emoji throughout, never mixed with ASCII glyphs. The first character is the state; what follows are the *available actions*: playing offers ⏸️, paused offers ▶️, stopped leaves only ⏹️. `SPRICH_ASCII=1` switches the whole thing to plain text (`Nur Emoji.wav  [playing]  pp rw stop` with `[1]`, `[2]`).
 
 ```
-Kurze Zeile.wav  🔈 ▶   ▌▌   ◀◀
-  [1] So lassen
-  [2] Noch kuerzer, ohne Optionen
+Nur Emoji.wav  🔊 ⏸️ ⏪ ⏹️
+  1️⃣ So lassen
+  2️⃣ Doch lieber die ASCII-Variante
 ```
 
 **Playback runs detached in the background.** The call returns as soon as
