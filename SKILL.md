@@ -1,21 +1,58 @@
 ---
 name: sprich
-description: Liest den aktuellen Sitzungsstand laut vor — Projekt, Aufgabe mit Ziel, Ergebnis des letzten Schritts und nummerierte Optionen, wie es weitergeht. Lokale Sprachausgabe über Piper (Thorsten High, offline, keine API). Nutze diesen Skill bei "/sprich", "lies mir vor", "sag mir wo wir stehen", "Status vorlesen", "Briefing" — und wenn der User erkennbar vom Bildschirm weg ist und einen Stand hören will. Mit Argument "/sprich <Text>" wird genau dieser Text gesprochen statt des Briefings.
+description: Spricht den Sitzungsstand laut vor — lokal über Piper (Thorsten High, offline, keine API). Ohne Argument wird der letzte Output gesprochen; war der schon zu hören, wird er wörtlich wiederholt. `/sprich briefing` gibt das volle Vier-Teile-Briefing (Projekt, Aufgabe mit Ziel, Ergebnis, nummerierte Optionen mit Kosten und Nutzen). Nutze diesen Skill bei "/sprich", "lies mir vor", "sag mir wo wir stehen", "nochmal", "wiederhol das", "Status vorlesen" — und wenn der User erkennbar vom Bildschirm weg ist. `/sprich <Text>` spricht genau diesen Text.
 ---
 
 # sprich
 
 Sprachausgabe des Sitzungsstands. Offline, lokal, ohne API-Call.
 
-## Zwei Modi
+## Was bei welchem Aufruf passiert
 
 | Aufruf | Verhalten |
 |---|---|
-| `/sprich` | Briefing aus dem aktuellen Kontext bauen und vorlesen |
-| `/sprich <Text>` | Genau diesen Text vorlesen, kein Briefing |
-| `/sprich medium` | Briefing mit der schnelleren Stimme (Thorsten Medium) |
+| `/sprich` | **Den letzten Output sprechen.** Wurde der bereits gesprochen: nur wiederholen. |
+| `/sprich briefing` | Volles Vier-Teile-Briefing aus dem Kontext |
+| `/sprich <Text>` | Genau diesen Text sprechen |
+| `/sprich medium` | wie der Default, aber mit der schnelleren Stimme |
 
-## Das Briefing — Aufbau
+## Der Default: letzter Output, sonst Wiederholung
+
+Bei `/sprich` ohne Argument sind es **zwei Schritte, in dieser Reihenfolge**:
+
+**Schritt 1 — nachsehen, was zuletzt gesprochen wurde.**
+
+```bash
+"$HOME"/.claude/skills/sprich/speak.sh --last-text
+```
+
+**Schritt 2 — vergleichen und entscheiden.**
+
+- Ist seitdem **nichts sachlich Neues** passiert — der letzte Output ist derselbe, den
+  der Cache enthält —, dann **wörtlich wiederholen**, nicht neu formulieren:
+
+  ```bash
+  "$HOME"/.claude/skills/sprich/speak.sh --repeat
+  ```
+
+  Das spielt das zwischengespeicherte Audio ab, ohne neu zu synthetisieren: statt fünf
+  Sekunden Rechenzeit null. Und es klingt identisch — wer „nochmal" sagt, will dasselbe
+  hören, nicht eine Variante davon. Eine umformulierte Wiederholung zwingt zum erneuten
+  Zuhören statt zum Nachhören.
+
+- Gibt es einen **neuen** letzten Output, dann diesen nach den Regeln unten sprechbar
+  machen und sprechen. Der Cache aktualisiert sich dabei von selbst.
+
+Der letzte Output ist das, was zuletzt an den User berichtet wurde — das Ergebnis des
+letzten Arbeitsschritts, nicht der Prozess dorthin. Enthielt er Optionen, gehören sie
+mit; enthielt er keine, wird keine erfunden. Projekt und Aufgabe kommen nur dazu, wenn
+der Output ohne sie unverständlich wäre. Es gilt trotzdem alles aus den Regeln unten:
+Wortgrenze, keine Pfade, Ordnungszahlen, Ausgabe auch ins Terminal.
+
+Exit-Code 2 von `--last-text` oder `--repeat` heißt: in dieser Session wurde noch nichts
+gesprochen. Dann ist der letzte Output zwangsläufig neu — normal sprechen.
+
+## Das Briefing — Aufbau (`/sprich briefing`)
 
 Genau vier Teile, in dieser Reihenfolge:
 
@@ -133,6 +170,8 @@ schicken.
 | `--voice emotional` | Thorsten Emotional, multi-speaker (`-s 0…6` im Modell) |
 | `--voice kerstin` / `--voice eva` | weibliche Stimmen, nur 16 kHz |
 | `--save /pfad/datei.wav` | zusätzlich als WAV sichern |
+| `--repeat` | zuletzt Gesprochenes erneut abspielen, ohne Synthese |
+| `--last-text` | zuletzt gesprochenen Text ausgeben, ohne zu sprechen |
 
 ## Setup-Zustand
 

@@ -3,7 +3,11 @@
 A Claude Code skill that **reads your session status out loud** in German, using
 a local Piper TTS voice. No API, no network, no per-call cost.
 
-You type `/sprich`, and you hear four things:
+You type `/sprich` and you hear the last thing that happened — the result of the
+last step, in language you can act on. Ask again without anything having changed
+and it simply repeats itself, word for word, from cache.
+
+For the full picture, `/sprich briefing` gives you four things:
 
 1. which project you are in,
 2. what the current task is and why,
@@ -62,9 +66,15 @@ adds Piper, downloads five German voices (~322 MB) to
 
 | Command | What happens |
 |---|---|
-| `/sprich` | Build a briefing from the current context and speak it |
+| `/sprich` | Speak the last output. Already spoken? Repeat it verbatim. |
+| `/sprich briefing` | Full four-part briefing from the current context |
 | `/sprich <text>` | Speak exactly that text |
-| `/sprich medium` | Briefing with the faster voice |
+| `/sprich medium` | Same as the default, with the faster voice |
+
+**Repeating is free.** Every utterance is cached as raw audio, so `--repeat`
+replays it with no synthesis at all — 0.16 s of CPU instead of 4.9 s. It also
+sounds identical, which is the point: someone asking "again" wants the same
+words back, not a paraphrase they have to parse a second time.
 
 The script also works standalone:
 
@@ -81,11 +91,13 @@ echo "Aus einer Pipe." | ./speak.sh
 | `--voice emotional` | `thorsten_emotional`, multi-speaker (`-s 0…6`) |
 | `--voice kerstin` / `--voice eva` | female voices, 16 kHz |
 | `--save FILE.wav` | also write a WAV |
+| `--repeat` | replay the last utterance, no synthesis |
+| `--last-text` | print what was said last, without speaking |
 
 Playback is streamed: Piper writes raw audio, `ffplay` starts on the first
 sentence, so you do not wait for the full synthesis.
 
-Override locations with `PIPER_VOICES` and `PIPER_PYTHON`.
+Override locations with `PIPER_VOICES`, `PIPER_PYTHON` and `SPRICH_STATE`.
 
 ## Voice benchmarks
 
