@@ -45,39 +45,29 @@ start_play() {  # $1 = wav
 
 # Kurzform: nur der sprechende Titel, nicht der volle Dateiname. Der Zeitstempel
 # bleibt auf der Platte, im Terminal ist er Ballast.
-# SPRICH_ASCII=1 schaltet auf reinen Text um.
+#
+# Keine Symbole fuer die Steuerung: im Terminal ist nichts davon anklickbar, also
+# ist ein Icon nur Zierrat. Der Zustand steht als Wort da, die Befehle stehen in
+# der Skill-Beschreibung.
 status_line() {  # $1 = wav, $2 = zustand: play|pause|stop
   local n; n="$(basename "$1")"; n="${n#* Response }"
-  if [[ -n "${SPRICH_ASCII:-}" ]]; then
-    case "$2" in
-      pause) printf '%s  [paused]  pp rw stop\n' "$n" ;;
-      stop)  printf '%s  [stopped]\n' "$n" ;;
-      *)     printf '%s  [playing]  pp rw stop\n' "$n" ;;
-    esac
-  else
-    # ISO-Textzeichen, keine Emoji-Variationsselektoren (kein U+FE0F) — sonst
-    # rendert das Terminal manche bunt und manche als Text.
-    # ♪ steht konstant fuer Audio; danach die moegliche Aktion:
-    # laeuft es, wird ⏸ angeboten, pausiert es ⏵.
-    case "$2" in
-      pause) printf '%s  ♪ ⏵ << ⏹\n' "$n" ;;
-      stop)  printf '%s  ⏹\n' "$n" ;;
-      *)     printf '%s  ♪ ⏸ << ⏹\n' "$n" ;;
-    esac
-  fi
+  case "$2" in
+    pause) printf '%s — pausiert\n' "$n" ;;
+    stop)  printf '%s — gestoppt\n' "$n" ;;
+    *)     printf '%s — läuft\n' "$n" ;;
+  esac
 }
 
-# Optionen als ASCII-Icons unter der Statuszeile. Bewusst die einzige Ausnahme
-# von der Ein-Zeilen-Regel: eine gehoerte Option, die man nicht nachlesen kann,
-# ist nach zehn Sekunden weg.
+# Optionen unter der Statuszeile. Bewusst die einzige Ausnahme von der
+# Ein-Zeilen-Regel: eine gehoerte Option, die man nicht nachlesen kann, ist nach
+# zehn Sekunden weg. Nummeriert mit [1], [2] — derselbe Ziffer, mit der der User
+# antwortet, und ueberall gleich gerendert.
 option_lines() {
   local i=1 o
-  local keys=("①" "②" "③" "④" "⑤" "⑥" "⑦" "⑧" "⑨")
   [[ ${#OPTIONS[@]} -eq 0 ]] && return 0
   for o in "${OPTIONS[@]}"; do
     [[ -z "$o" ]] && continue
-    if [[ -n "${SPRICH_ASCII:-}" ]]; then printf '  [%d] %s\n' "$i" "$o"
-    else printf '  %s %s\n' "${keys[$((i-1))]:-$i}" "$o"; fi
+    printf '  [%d] %s\n' "$i" "$o"
     i=$((i+1))
   done
 }
@@ -91,19 +81,19 @@ load_opts() {  # bash 3.2 hat kein mapfile
 # ---------- Steuerbefehle: brauchen weder Piper noch Text ----------
 case "${1:-}" in
   pp|--toggle|--pause|--play)
-    pid_alive || { echo "⏹ nichts aktiv  << again"; exit 0; }
+    pid_alive || { echo "nichts aktiv — !sprich again spielt die letzte Ausgabe"; exit 0; }
     if [[ "$(pid_state)" == T* ]]; then kill -CONT "$(cat "$STATE/play.pid")"; S="play"; else kill -STOP "$(cat "$STATE/play.pid")"; S="pause"; fi
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
     status_line "$(cat "$STATE/play.file")" "$S"; exit 0 ;;
   rw|--rewind|again|--repeat)
     F="$(cat "$STATE/play.file" 2>/dev/null)"
-    [[ -s "${F:-}" ]] || { echo "⏹ nichts im Zwischenspeicher"; exit 2; }
+    [[ -s "${F:-}" ]] || { echo "nichts im Zwischenspeicher"; exit 2; }
     RATE=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
     start_play "$F"; status_line "$F" play; load_opts; option_lines; exit 0 ;;
   stop|--stop)
     pid_alive && kill "$(cat "$STATE/play.pid")" 2>/dev/null
     F="$(cat "$STATE/play.file" 2>/dev/null)"; : > "$STATE/play.pid"
-    [[ -s "${F:-}" ]] && status_line "$F" stop || echo "⏹ gestoppt"; exit 0 ;;
+    [[ -s "${F:-}" ]] && status_line "$F" stop || echo "gestoppt"; exit 0 ;;
   text|--last-text)
     [[ -s "$STATE/last.txt" ]] || { echo "noch nichts gesprochen" >&2; exit 2; }
     cat "$STATE/last.txt"; exit 0 ;;

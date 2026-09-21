@@ -134,22 +134,21 @@ als Codeblock. Das ist keine Dopplung — es ist die einzige Fassung, die der Us
 sehen bekommt.
 
 ```
-ISO-Zeichen.wav  ♪ ⏸ << ⏹
-  ① So lassen
-  ② Andere Ziffern-Zeichen
+Statuszeile ohne Symbole.wav — läuft
+  [1] So lassen
+  [2] Zustand als Wort
 ```
 
-Nur der sprechende Titel, keine Zeitstempel, keine Dauer, kein `!sprich` vor jedem
-Befehl — der Zeitstempel bleibt auf der Platte, im Terminal ist er Ballast.
+Nur der sprechende Titel und der Zustand als Wort — `läuft`, `pausiert`, `gestoppt`.
+Keine Zeitstempel, keine Dauer, kein `!sprich` vor jedem Befehl: der Zeitstempel bleibt
+auf der Platte, im Terminal ist er Ballast.
 
-**ISO-Textzeichen, keine Emoji** — und keine Variationsselektoren (`U+FE0F`), sonst
-rendert das Terminal manche Zeichen bunt und manche als Text. Die Optionen passen sich
-an: ① ② ③ statt Keycap-Emoji.
+**Keine Symbole für die Steuerung.** Im Terminal ist nichts davon anklickbar, also
+trägt ein ♪ oder ⏸ nichts — es sieht nach Bedienelement aus und ist keines. Die
+Befehle stehen unten in der Tabelle, getippt wird ohnehin.
 
-♪ steht konstant für Audio. Danach kommt die **mögliche Aktion**: läuft es, wird ⏸
-angeboten; pausiert es, ⏵. Gestoppt bleibt nur ⏹, weil es nichts mehr zu steuern gibt.
-
-`SPRICH_ASCII=1` schaltet auf reines ASCII um: `ISO-Zeichen.wav  [playing]  pp rw stop` mit `[1]`, `[2]`. Auch dort wird nicht gemischt.
+Optionen werden mit `[1]`, `[2]` nummeriert — dieselbe Ziffer, mit der der User
+antwortet, und in jedem Terminal gleich breit gerendert.
 
 Gilt genauso für die Steuerbefehle — auch nach `pp`, `rw` oder `again` gehört die
 zurückgegebene Zeile in die Antwort, sonst sieht der User den Zustandswechsel nicht.
@@ -207,7 +206,7 @@ Die Zeile nennt sie mit, der User tippt sie mit `!` davor:
 
 | Befehl | Wirkung |
 |---|---|
-| `!sprich pp` | Pause bzw. Fortsetzen (Umschalter), Icon wechselt `[>]` ↔ `[||]` |
+| `!sprich pp` | Pause bzw. Fortsetzen (Umschalter), die Zeile meldet `pausiert` / `läuft` |
 | `!sprich rw` | von vorn abspielen |
 | `!sprich stop` | beenden |
 | `!sprich again` | letzte Ausgabe erneut, ohne Synthese — samt ihrer Optionszeilen |

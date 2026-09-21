@@ -85,12 +85,16 @@ the process has no TTY (`tty` reports `not a tty`; writing to `/dev/tty` fails w
 line verbatim in its own reply. That is not duplication — it is the only copy the
 user ever sees.
 
-Just the speaking title — no timestamp, no duration, no command prefixes. Plain ISO text glyphs, no emoji and no variation selectors (`U+FE0F`), so the terminal renders every character the same way instead of colouring some and not others. ♪ is a constant audio marker; what follows is the *available action*: playing offers ⏸, paused offers ⏵, stopped leaves only ⏹. `SPRICH_ASCII=1` switches the whole thing to ASCII (`[playing]  pp rw stop` with `[1]`, `[2]`).
+Just the speaking title and the state as a word — no timestamp, no command prefixes.
+**No transport glyphs.** Nothing in a terminal is clickable, so a ♪ or a ⏸ carries
+nothing: it looks like a control and is not one. The commands are in the table below,
+and they get typed anyway. Options are numbered `[1]`, `[2]` — the same digit the user
+answers with, and the same width in every terminal.
 
 ```
-ISO-Zeichen.wav  ♪ ⏸ << ⏹
-  ① So lassen
-  ② Andere Ziffern-Zeichen
+Statuszeile ohne Symbole.wav — läuft
+  [1] So lassen
+  [2] Zustand als Wort
 ```
 
 **Playback runs detached in the background.** The call returns as soon as
