@@ -6,6 +6,7 @@
 #
 #   speak.sh "Text"                 synthesise, play, print one status line
 #   speak.sh --title "Slug" "Text"  give the file a speaking name
+#   speak.sh --full "Text"          read a whole output out, not a briefing
 #   speak.sh --voice medium "Text"  faster voice
 #   speak.sh pp | rw | stop         play/pause · rewind to start · stop
 #   speak.sh again                  replay the last utterance, no synthesis
@@ -24,12 +25,26 @@ VOICE="de_DE-thorsten-high"
 RATE=22050
 TITLE=""
 OPTIONS=()
+# Vollstaendige Ausgabe statt Briefing. Vorbelegt aus dem Zustand, damit pp, rw
+# und again dieselbe Zeile zeigen wie der Lauf, der die Datei erzeugt hat; ein
+# neuer Sprechauftrag setzt sie unten wieder zurueck.
+FULL=$(cat "${SPRICH_STATE:-$HOME/.claude/skills/sprich/.state}/last.full" 2>/dev/null || echo 0)
 
 mkdir -p "$AUDIO"
 
 # Sweep old audio on every invocation. -mmin, not -mtime: -mtime counts whole
 # days and would never match a one-hour window.
 sweep() { find "$AUDIO" -type f -name '*.wav' -mmin +"$KEEP_MIN" -delete 2>/dev/null; }
+
+# Dauer aus der Dateigroesse statt ueber sox: Piper schreibt PCM 16 bit mono mit
+# 44 Byte Kopf, das rechnet sich exakt und braucht kein weiteres Werkzeug.
+wav_dauer() {  # $1 = wav -> "m:ss"
+  local b r
+  b=$(wc -c < "$1" 2>/dev/null | tr -d ' ')
+  r=$(cat "$STATE/last.rate" 2>/dev/null || echo 22050)
+  [[ -n "$b" && -n "$r" && "$r" -gt 0 ]] || return 1
+  awk -v b="$b" -v r="$r" 'BEGIN{s=(b-44)/(r*2); if(s<0)s=0; printf "%d:%02d", int(s/60), int(s+0.5)%60}'
+}
 
 pid_alive() { [[ -s "$STATE/play.pid" ]] && kill -0 "$(cat "$STATE/play.pid")" 2>/dev/null; }
 pid_state() { ps -o state= -p "$(cat "$STATE/play.pid" 2>/dev/null)" 2>/dev/null | tr -d ' '; }
@@ -49,12 +64,17 @@ start_play() {  # $1 = wav
 # Keine Symbole fuer die Steuerung: im Terminal ist nichts davon anklickbar, also
 # ist ein Icon nur Zierrat. Der Zustand steht als Wort da, die Befehle stehen in
 # der Skill-Beschreibung.
+# Die Dauer steht nur im --full-Modus dabei. Bei einem Briefing ist sie Ballast —
+# es sind immer rund vierzig Sekunden. Bei einer vollstaendigen Ausgabe ist sie
+# die eine Zahl, die man vorher wissen will: zwei Minuten hoert man mit, sieben
+# liest man lieber.
 status_line() {  # $1 = wav, $2 = zustand: play|pause|stop
-  local n; n="$(basename "$1")"; n="${n#* Response }"
+  local n d=""; n="$(basename "$1")"; n="${n#* Response }"
+  [[ "${FULL:-0}" == 1 ]] && d=" · $(wav_dauer "$1")"
   case "$2" in
-    pause) printf '%s — pausiert\n' "$n" ;;
-    stop)  printf '%s — gestoppt\n' "$n" ;;
-    *)     printf '%s — läuft\n' "$n" ;;
+    pause) printf '%s — pausiert%s\n' "$n" "$d" ;;
+    stop)  printf '%s — gestoppt%s\n' "$n" "$d" ;;
+    *)     printf '%s — läuft%s\n' "$n" "$d" ;;
   esac
 }
 
@@ -102,6 +122,7 @@ case "${1:-}" in
   --help|-h) sed -n '2,20p' "$0"; exit 0 ;;
 esac
 
+FULL=0   # der geerbte Wert galt nur fuer die Steuerbefehle oben
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --voice)
@@ -114,6 +135,7 @@ while [[ $# -gt 0 ]]; do
         *)         VOICE="$2" ;;
       esac
       shift 2 ;;
+    --full) FULL=1; shift ;;
     --title) TITLE="$2"; shift 2 ;;
     --option) OPTIONS+=("$2"); shift 2 ;;
     *) break ;;
@@ -149,6 +171,7 @@ printf '%s' "$TEXT" | "$PY" -m piper -m "$VOICE" --data-dir "$VOICE_DIR" -f "$WA
 printf '%s' "$TEXT"  > "$STATE/last.txt"
 printf '%s' "$RATE"  > "$STATE/last.rate"
 printf '%s' "$VOICE" > "$STATE/last.voice"
+printf '%s' "$FULL"  > "$STATE/last.full"
 
 : > "$STATE/last.opts"
 [[ ${#OPTIONS[@]} -gt 0 ]] && printf '%s\n' "${OPTIONS[@]}" > "$STATE/last.opts"

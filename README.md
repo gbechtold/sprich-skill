@@ -68,6 +68,7 @@ adds Piper, downloads five German voices (~322 MB) to
 |---|---|
 | `/sprich` | Speak the last output. Already spoken? Repeat it verbatim. |
 | `/sprich briefing` | Full four-part briefing from the current context |
+| `/sprich --full` | Read the **whole** last output, not the condensed briefing |
 | `/sprich <text>` | Speak exactly that text |
 | `/sprich medium` | Same as the default, with the faster voice |
 
@@ -75,6 +76,27 @@ adds Piper, downloads five German voices (~322 MB) to
 replays it with no synthesis at all — 0.16 s of CPU instead of 4.9 s. It also
 sounds identical, which is the point: someone asking "again" wants the same
 words back, not a paraphrase they have to parse a second time.
+
+## `--full` — the whole output, not the briefing
+
+The default condenses: 110 words at most, and an option gets dropped before the
+context does. That is right when you want to decide, and wrong when you want the
+whole finding — you cannot read along while it speaks.
+
+`--full` lifts the cap. Nothing is cut: no word limit, no dropped option, no
+omitted reasoning. **"Without system details" means translated, not deleted** —
+paths, URLs, hashes, IDs, flags and code stay unspeakable either way, so they come
+out as what they do in the sentence (`exit code 1` → "aborted with an error", a
+twenty-line stack trace → "the error names three missing dependencies").
+
+It costs time. Measured 2026-09-21: 570 words are 2:31 of speech and 55 seconds of
+synthesis — roughly one second of waiting per three seconds spoken. A briefing is
+out in four. Because the length matters up front, the status line carries the
+duration in this mode:
+
+```
+Wirkungsmodell Indie Wandern.wav — läuft · 2:31
+```
 
 ## One status line, plus the options
 
@@ -133,6 +155,7 @@ echo "Aus einer Pipe." | ./speak.sh --title "Pipe"
 | Flag | Effect |
 |---|---|
 | *(none)* | `thorsten-high` — the chosen voice |
+| `--full` | full-length output; the status line gains the duration |
 | `--title "…"` | speaking filename |
 | `--option "…"` | one option line, repeatable; the script numbers them |
 | `--voice medium` | `thorsten-medium` — faster, slightly flatter |

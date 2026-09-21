@@ -13,6 +13,7 @@ Sprachausgabe des Sitzungsstands. Offline, lokal, ohne API-Call.
 |---|---|
 | `/sprich` | **Den letzten Output sprechen.** Wurde der bereits gesprochen: nur wiederholen. |
 | `/sprich briefing` | Volles Vier-Teile-Briefing aus dem Kontext |
+| `/sprich --full` | **Den ganzen letzten Output vorlesen**, nicht die Kurzfassung |
 | `/sprich <Text>` | Genau diesen Text sprechen |
 | `/sprich medium` | wie der Default, aber mit der schnelleren Stimme |
 
@@ -51,6 +52,44 @@ Wortgrenze, keine Pfade, Ordnungszahlen — und die Statuszeile in die Antwort �
 
 Exit-Code 2 von `text` oder `again` heißt: in dieser Session wurde noch nichts
 gesprochen. Dann ist der letzte Output zwangsläufig neu — normal sprechen.
+
+## Die vollständige Ausgabe (`/sprich --full`)
+
+Der Default und das Briefing verdichten: höchstens 110 Wörter, notfalls fällt eine
+Option weg. Das ist richtig, wenn man entscheiden will — und falsch, wenn man den
+ganzen Befund hören will, weil man ihn nicht mitlesen kann.
+
+`/sprich --full` hebt die Verdichtung auf. **Der letzte Output wird vollständig
+vorgelesen, ohne Kürzung.** Kein Wortlimit, keine gestrichene Option, keine
+weggelassene Begründung. Was im Output stand, wird gesprochen.
+
+**„Ohne Systemdetails" heißt übersetzt, nicht gelöscht.** Pfade, URLs, Dateinamen,
+Hashes, IDs, Flags und Code bleiben unsprechbar — daran ändert der Voll-Modus nichts.
+Sie verschwinden aber nicht stumm, sondern kommen als das vor, was sie im Satz leisten:
+
+- `/Users/…/024-Chatterbox/sprich-skill/speak.sh` → „das Sprechskript im Repo"
+- `act_578040944854457` → „das Hammerl-Werbekonto"
+- `exit code 1` → „mit Fehler abgebrochen"
+- ein zwanzigzeiliger Stacktrace → „der Fehler nennt drei fehlende Abhängigkeiten"
+
+Der Unterschied zum Default ist also der **Umfang**, nicht die Sprechbarkeit. Alle
+Regeln von unten gelten weiter: Ordnungszahlen statt „1.", kurze Hauptsätze, Zahlen
+ausschreiben, wo sie stolpern.
+
+**Was es kostet.** Die Synthese blockiert, bis sie fertig ist. Gemessen am 21.09.2026:
+570 Wörter ergeben 2:31 Sprechzeit und brauchen 55 Sekunden Rechenzeit — also rund
+eine Sekunde Warten je drei gesprochene Sekunden. Ein Briefing ist nach vier Sekunden
+draußen, eine vollständige Ausgabe kann die Sitzung eine knappe Minute anhalten. Das
+ist der Preis dafür, alles zu hören; bei einem langen Output lohnt die Rückfrage, ob
+das Briefing nicht reicht.
+
+Weil die Länge hier im Voraus zählt, trägt die Statuszeile im Voll-Modus die Dauer:
+
+```
+Wirkungsmodell Indie Wandern.wav — läuft · 2:31
+```
+
+Im Default steht sie bewusst nicht dabei — dort sind es immer rund vierzig Sekunden.
 
 ## Das Briefing — Aufbau (`/sprich briefing`)
 
@@ -108,6 +147,7 @@ zurückspringen. Deshalb:
 
 - **Höchstens 110 Wörter**, rund 40 Sekunden. Lieber **drei** Optionen mit
   Kontext als fünf ohne. Wenn es eng wird, fällt eine Option weg — nie der Kontext.
+  Einzige Ausnahme ist `--full`; alles andere in dieser Liste gilt auch dort.
 - **Keine Pfade, URLs, Dateinamen, Hashes, IDs, Flags, Code.** Das klingt
   gesprochen wie Kauderwelsch. Statt `/Users/…/260919-voice-test/out/` sag
   „der Testordner im Chatterbox-Projekt". Statt `exit code 1` sag „mit Fehler
@@ -221,6 +261,7 @@ alles älter als eine Stunde fliegt raus (`SPRICH_KEEP_MIN` ändert das Fenster)
 | Flag | Wirkung |
 |---|---|
 | *(ohne)* | Thorsten High — die gesetzte Stimme, nicht ohne Rücksprache ändern |
+| `--full` | vollständige Ausgabe: Statuszeile bekommt die Dauer |
 | `--title "…"` | sprechender Dateiname |
 | `--option "…"` | eine Optionszeile, wiederholbar; Nummerierung setzt das Skript |
 | `--voice medium` | Thorsten Medium — schneller, minimal flacher |
