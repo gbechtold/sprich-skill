@@ -60,7 +60,13 @@ cd sprich-skill
 
 Needs [uv](https://docs.astral.sh/uv/) and `ffmpeg` (for `ffplay`). The installer
 adds Piper, downloads five German voices (~322 MB) to
-`~/.local/share/piper-voices`, and copies the skill to `~/.claude/skills/sprich`.
+`~/.local/share/piper-voices`, and puts three things in place: the skill in
+`~/.claude/skills/sprich`, the auto-speak scripts in `~/.claude/scripts`, and the
+`sprich` transport command in `~/.local/bin`.
+
+Pass `./install.sh --hook` to register the Stop hook in `~/.claude/settings.json` as
+well; it backs the file up first and skips if the hook is already there. Without the
+flag the installer prints the JSON line for you to add by hand.
 
 ## Use
 
@@ -76,6 +82,43 @@ adds Piper, downloads five German voices (~322 MB) to
 replays it with no synthesis at all — 0.16 s of CPU instead of 4.9 s. It also
 sounds identical, which is the point: someone asking "again" wants the same
 words back, not a paraphrase they have to parse a second time.
+
+## Speak every answer without typing anything
+
+`/sprich` still costs a command and a turn. Dictation does not: you hold a key, you
+talk. The listening half of that pair is a Stop hook that speaks the last output as
+soon as the answer stands.
+
+```bash
+sprich auto on       # speak every answer
+sprich auto off      # back to manual /sprich
+sprich auto status   # show the switch
+```
+
+It pulls the last assistant text out of the session transcript, drops code blocks,
+paths, links and tables, and stops after 90 words. The cap is the point: listening
+has to stay shorter than reading, or the hook becomes something you talk over.
+
+Two measurements decide the defaults. `thorsten-high` needs 5.5 s to synthesise a
+paragraph, `thorsten-medium` 0.8 s, so auto-speak uses medium while a hand-typed
+`/sprich` keeps the better voice. And the hook itself returns in 0.2 s: it forks
+synthesis and playback into a detached subshell, so the session never waits on the
+voice. `sprich pp`, `sprich rw` and `sprich stop` work on it like on any utterance.
+
+The switch is the file `.state/auto`. When it is missing the hook exits immediately
+and changes nothing, which is also what makes it safe to leave registered.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `SPRICH_AUTO_VOICE` | `medium` | voice for auto-speak only |
+| `SPRICH_AUTO_WORDS` | `90` | word ceiling before the text is cut at a sentence |
+
+Wire the hook with `./install.sh --hook`, or add it by hand to `hooks.Stop` in
+`~/.claude/settings.json`:
+
+```json
+{ "type": "command", "command": "~/.claude/scripts/sprich-stop-hook.sh", "timeout": 10 }
+```
 
 ## `--full` — the whole output, not the briefing
 

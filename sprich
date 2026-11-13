@@ -1,3 +1,8 @@
 #!/bin/bash
 # Transport für den Claude-Skill "sprich": rw · pp · stop · again · text · ls
+# Dazu der Schalter fürs automatische Vorlesen: sprich auto on|off|status
+if [[ "${1:-}" == "auto" ]]; then
+  shift
+  exec "$HOME/.claude/scripts/sprich-stop-hook.sh" "${1:-status}"
+fi
 exec "${SPRICH_SKILL:-$HOME/.claude/skills/sprich}/speak.sh" "$@"
