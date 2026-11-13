@@ -86,11 +86,12 @@ words back, not a paraphrase they have to parse a second time.
 ## Speak every answer without typing anything
 
 `/sprich` still costs a command and a turn. Dictation does not: you hold a key, you
-talk. The listening half of that pair is a Stop hook that speaks the last output as
-soon as the answer stands.
+talk. The listening half of that pair is a Stop hook that offers the last output as
+speech as soon as the answer stands.
 
 ```bash
-sprich auto on       # speak every answer
+sprich auto on       # notify first, speak on click
+sprich auto now      # speak immediately, no banner
 sprich auto off      # back to manual /sprich
 sprich auto status   # show the switch
 ```
@@ -99,19 +100,54 @@ It pulls the last assistant text out of the session transcript, drops code block
 paths, links and tables, and stops after 90 words. The cap is the point: listening
 has to stay shorter than reading, or the hook becomes something you talk over.
 
-Two measurements decide the defaults. `thorsten-high` needs 5.5 s to synthesise a
+### Two sentences of bearings come first
+
+Spoken output has no scrollback. Someone who looks up after a minute away catches a
+sentence with no way back to the context, so every utterance opens with where it
+comes from:
+
+```
+Projekt Stars Bridge. Aufgabe: Kontext-Router Registry.
+```
+
+The project comes from the working directory - the segment under `Projects`, minus
+the date or number prefix that identifies a folder rather than a project. The task
+comes from the session title, or from the last prompt when there is no title yet.
+Worktrees and scratch directories named by a UUID are not projects and do not get
+announced as one; the line says `Ordner X, kein Projekt` or
+`Ohne Projekt, Heimverzeichnis` instead. The preamble does not count against the
+word ceiling, which governs the content.
+
+### The banner is the default, and that is a collision fix
+
+Several sessions finish at their own pace. A hook that speaks on its own turns two
+finished terminals into two voices at once, and neither is understandable. So the
+hook posts a notification naming the project and the task, and speaks only when
+that banner is clicked. Click a second one and it interrupts the first rather than
+layering on top of it.
+
+The text waits under `.state/pending/<session>.txt` until it is spoken, then it is
+consumed. Anything still there after an hour is swept by the next run. `sprich auto
+now` skips the banner for anyone running a single session.
+
+### Defaults, and why
+
+Two measurements decide them. `thorsten-high` needs 5.5 s to synthesise a
 paragraph, `thorsten-medium` 0.8 s, so auto-speak uses medium while a hand-typed
 `/sprich` keeps the better voice. And the hook itself returns in 0.2 s: it forks
-synthesis and playback into a detached subshell, so the session never waits on the
-voice. `sprich pp`, `sprich rw` and `sprich stop` work on it like on any utterance.
+everything into a detached subshell, so the session never waits on the voice.
+`sprich pp`, `sprich rw` and `sprich stop` work on it like on any utterance.
 
-The switch is the file `.state/auto`. When it is missing the hook exits immediately
-and changes nothing, which is also what makes it safe to leave registered.
+The switch is the file `.state/auto`, holding the mode. When it is missing the hook
+exits immediately and changes nothing, which is what makes it safe to leave
+registered.
 
 | Variable | Default | Effect |
 |---|---|---|
 | `SPRICH_AUTO_VOICE` | `medium` | voice for auto-speak only |
 | `SPRICH_AUTO_WORDS` | `90` | word ceiling before the text is cut at a sentence |
+| `SPRICH_PROJECT_ROOT` | `Projects` | path segment the project name sits under |
+| `SPRICH_PROJECT_CONTAINERS` | `BusinessProjects,Clients,Kunden` | grouping folders to skip |
 
 Wire the hook with `./install.sh --hook`, or add it by hand to `hooks.Stop` in
 `~/.claude/settings.json`:
@@ -119,6 +155,10 @@ Wire the hook with `./install.sh --hook`, or add it by hand to `hooks.Stop` in
 ```json
 { "type": "command", "command": "~/.claude/scripts/sprich-stop-hook.sh", "timeout": 10 }
 ```
+
+Notifications need [terminal-notifier](https://github.com/julienXX/terminal-notifier)
+(`brew install terminal-notifier`). Without it the hook falls silent in banner mode
+rather than speaking unasked.
 
 ## `--full` — the whole output, not the briefing
 

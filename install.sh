@@ -16,6 +16,7 @@ WITH_HOOK=0
 
 command -v uv >/dev/null || { echo "uv fehlt: https://docs.astral.sh/uv/getting-started/installation/" >&2; exit 1; }
 command -v ffplay >/dev/null || echo "Hinweis: ffplay fehlt (brew install ffmpeg) — ohne ffplay kein Streaming-Playback." >&2
+command -v terminal-notifier >/dev/null || echo "Hinweis: terminal-notifier fehlt (brew install terminal-notifier) — ohne das bleibt der Banner-Modus stumm." >&2
 
 echo "→ Piper installieren"
 uv tool install piper-tts

@@ -17,25 +17,62 @@ Sprachausgabe des Sitzungsstands. Offline, lokal, ohne API-Call.
 | `/sprich <Text>` | Genau diesen Text sprechen |
 | `/sprich medium` | wie der Default, aber mit der schnelleren Stimme |
 
+## Jede Ausgabe mit Projekt und Aufgabe eroeffnen
+
+Gesprochenes hat keinen Scrollback. Wer eine Minute weghoert und dann einen Satz
+auffaengt, hat keinen Weg zurueck in den Zusammenhang. Darum stehen vor jedem
+gesprochenen Output zwei Saetze: welches Projekt, und welche Aufgabe.
+
+    Projekt Stars Bridge. Aufgabe: Kontext-Router Registry.
+
+Das gilt fuer den Hook und fuer jedes `/sprich` von Hand. Die zwei Saetze zaehlen
+nicht gegen die Wortgrenze, die Grenze gilt dem Inhalt.
+
+Woher die Angaben kommen, wenn der Hook spricht: das Projekt aus dem
+Arbeitsverzeichnis (das Segment unter `Projects`, ohne Datums- oder
+Nummernpraefix), die Aufgabe aus dem Sitzungstitel, ersatzweise aus dem letzten
+Auftrag. Liegt die Arbeit in keinem Projektordner, heisst es „Ordner X, kein
+Projekt" oder „Ohne Projekt, Heimverzeichnis" - behauptet wird nur, was der Pfad
+hergibt. Von Hand gesprochen gilt dasselbe aus dem Kontext heraus.
+
+Abrufen laesst sich die Zeile einzeln:
+
+```bash
+python3 ~/.claude/scripts/sprich-last-output.py --preamble <transcript.jsonl>
+```
+
+
 ## Automatisch vorlesen, ohne etwas zu tippen
 
-Der Stop-Hook `~/.claude/scripts/sprich-stop-hook.sh` liest den letzten Output vor,
-sobald die Antwort steht. Er nimmt die schnelle Stimme (`medium`, unter einer Sekunde
-Synthese) und hoert nach 90 Woertern auf, damit das Zuhoeren nicht laenger dauert als
-das Mitlesen. Codebloecke, Pfade, Links und Tabellen fallen weg.
+Der Stop-Hook `~/.claude/scripts/sprich-stop-hook.sh` bietet den letzten Output
+als Sprache an, sobald die Antwort steht. Er nimmt die schnelle Stimme (`medium`,
+unter einer Sekunde Synthese) und hoert nach 90 Woertern auf, damit das Zuhoeren
+nicht laenger dauert als das Mitlesen. Codebloecke, Pfade, Links und Tabellen
+fallen weg.
 
 | Befehl | Wirkung |
 |---|---|
-| `sprich auto on` | Vorlesen an |
-| `sprich auto off` | Vorlesen aus |
+| `sprich auto on` | an, Banner zuerst: gesprochen wird auf Klick |
+| `sprich auto now` | an, sofort sprechen, ohne Banner |
+| `sprich auto off` | aus |
 | `sprich auto status` | zeigt den Schalter |
 
-Der Schalter ist die Datei `.state/auto`. Fehlt sie, endet der Hook sofort und
-veraendert nichts. Waehrend eine Ausgabe laeuft, gelten `sprich pp`, `sprich rw` und
-`sprich stop` wie sonst auch.
+**Warum das Banner der Default ist.** Mehrere Sitzungen werden zu ihrer eigenen
+Zeit fertig. Ein Hook, der von sich aus spricht, macht aus zwei fertigen
+Terminals zwei Stimmen gleichzeitig. Das Banner nennt stattdessen Projekt und
+Aufgabe, wartet, und gesprochen wird nur die angeklickte Meldung. Wer eine zweite
+anklickt, unterbricht die erste, statt sie zu ueberlagern.
 
-Stellschrauben als Umgebungsvariablen: `SPRICH_AUTO_VOICE` (Default `medium`) und
-`SPRICH_AUTO_WORDS` (Default 90).
+Der Text wartet solange unter `.state/pending/<Sitzung>.txt` und wird beim
+Sprechen verbraucht. Was dort nach einer Stunde noch liegt, raeumt der naechste
+Lauf weg.
+
+Der Schalter ist die Datei `.state/auto` und enthaelt den Modus. Fehlt sie, endet
+der Hook sofort und veraendert nichts. Waehrend eine Ausgabe laeuft, gelten
+`sprich pp`, `sprich rw` und `sprich stop` wie sonst auch.
+
+Stellschrauben als Umgebungsvariablen: `SPRICH_AUTO_VOICE` (Default `medium`),
+`SPRICH_AUTO_WORDS` (Default 90) und `SPRICH_PROJECT_ROOT` (Default `Projects`).
 
 ## Der Default: letzter Output, sonst Wiederholung
 
