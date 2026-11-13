@@ -17,6 +17,26 @@ Sprachausgabe des Sitzungsstands. Offline, lokal, ohne API-Call.
 | `/sprich <Text>` | Genau diesen Text sprechen |
 | `/sprich medium` | wie der Default, aber mit der schnelleren Stimme |
 
+## Automatisch vorlesen, ohne etwas zu tippen
+
+Der Stop-Hook `~/.claude/scripts/sprich-stop-hook.sh` liest den letzten Output vor,
+sobald die Antwort steht. Er nimmt die schnelle Stimme (`medium`, unter einer Sekunde
+Synthese) und hoert nach 90 Woertern auf, damit das Zuhoeren nicht laenger dauert als
+das Mitlesen. Codebloecke, Pfade, Links und Tabellen fallen weg.
+
+| Befehl | Wirkung |
+|---|---|
+| `sprich auto on` | Vorlesen an |
+| `sprich auto off` | Vorlesen aus |
+| `sprich auto status` | zeigt den Schalter |
+
+Der Schalter ist die Datei `.state/auto`. Fehlt sie, endet der Hook sofort und
+veraendert nichts. Waehrend eine Ausgabe laeuft, gelten `sprich pp`, `sprich rw` und
+`sprich stop` wie sonst auch.
+
+Stellschrauben als Umgebungsvariablen: `SPRICH_AUTO_VOICE` (Default `medium`) und
+`SPRICH_AUTO_WORDS` (Default 90).
+
 ## Der Default: letzter Output, sonst Wiederholung
 
 Bei `/sprich` ohne Argument sind es **zwei Schritte, in dieser Reihenfolge**:
@@ -68,7 +88,7 @@ Hashes, IDs, Flags und Code bleiben unsprechbar — daran ändert der Voll-Modus
 Sie verschwinden aber nicht stumm, sondern kommen als das vor, was sie im Satz leisten:
 
 - `/Users/…/024-Chatterbox/sprich-skill/speak.sh` → „das Sprechskript im Repo"
-- `act_578040944854457` → „das Hammerl-Werbekonto"
+- `act_000000000000000` → „das Werbekonto des Kunden“
 - `exit code 1` → „mit Fehler abgebrochen"
 - ein zwanzigzeiliger Stacktrace → „der Fehler nennt drei fehlende Abhängigkeiten"
 
